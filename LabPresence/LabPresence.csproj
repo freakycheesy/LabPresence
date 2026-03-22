@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
-		<LangVersion>latest</LangVersion>
+		<LangVersion>preview</LangVersion>
 
 		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
-		<SignAssembly>True</SignAssembly>
+		<SignAssembly>false</SignAssembly>
 		<AssemblyOriginatorKeyFile>$(SolutionDir)\key.snk</AssemblyOriginatorKeyFile>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 

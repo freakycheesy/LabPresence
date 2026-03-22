@@ -8,84 +8,48 @@ namespace LabPresence
 {
     public static class Gamemodes
     {
-        private static readonly List<Gamemode> _Gamemodes = [];
+        private static readonly Dictionary<string, Gamemode> _Gamemodes = [];
 
         public static void RegisterGamemode(this Gamemode gamemode)
         {
             ArgumentNullException.ThrowIfNull(gamemode);
 
-            if (_Gamemodes.Contains(gamemode))
+            if (_Gamemodes[gamemode.Barcode] != null)
                 throw new ArgumentException("Gamemode is already registered!");
 
             if (string.IsNullOrWhiteSpace(gamemode.Barcode))
                 throw new ArgumentNullException(nameof(gamemode), "The barcode cannot be empty or null!");
 
-            if (_Gamemodes.Any(x => x.Barcode == gamemode.Barcode))
-                throw new ArgumentException("A gamemode with the same barcode is already registered!");
-
             if (gamemode.CustomToolTip == null && gamemode.OverrideTime == null)
                 throw new ArgumentException("The gamemode needs to have a custom tooltip and/or override time");
 
-            _Gamemodes.Add(gamemode);
+            _Gamemodes.Add(gamemode.Barcode, gamemode);
         }
+        public static void RegisterGamemode(GamemodeParams args)
+          => RegisterGamemode(new Gamemode(args));
 
-        public static void RegisterGamemode(string barcode, Func<string> customToolTip)
-            => RegisterGamemode(new(barcode, customToolTip: customToolTip));
-
-        public static void RegisterGamemode(string barcode, float minimumDelay, Func<string> customToolTip)
-            => RegisterGamemode(new(barcode, minimumDelay: minimumDelay, customToolTip: customToolTip));
-
-        public static void RegisterGamemode(string barcode, Func<Timestamp> overrideTime)
-            => RegisterGamemode(new(barcode, overrideTime: overrideTime));
-
-        public static void RegisterGamemode(string barcode, Func<string> customToolTip, Func<Timestamp> overrideTime)
-            => RegisterGamemode(new(barcode, customToolTip: customToolTip, overrideTime: overrideTime));
-
-        public static void RegisterGamemode(string barcode, float minimumDelay, Func<string> customToolTip, Func<Timestamp> overrideTime)
-            => RegisterGamemode(new(barcode, minimumDelay: minimumDelay, customToolTip: customToolTip, overrideTime: overrideTime));
-
-        public static bool UnregisterGamemode(string barcode)
-        {
-            if (string.IsNullOrWhiteSpace(barcode))
-                throw new ArgumentNullException(nameof(barcode), "The barcode cannot be null or empty!");
-
-            if (_Gamemodes.Count == 0)
-                return false;
-
-            var index = _Gamemodes.FindIndex(x => x.Barcode == barcode);
-            if (index == -1)
-                return false;
-
-            _Gamemodes.RemoveAt(index);
-
-            return true;
-        }
+        public static bool UnregisterGamemode(string barcode) => _Gamemodes.Remove(barcode);
 
         public static bool UnregisterGamemode(this Gamemode gamemode)
             => UnregisterGamemode(gamemode?.Barcode);
 
         public static bool IsGamemodeRegistered(string barcode)
-            => _Gamemodes.Any(x => x.Barcode == barcode);
+            => _Gamemodes[barcode] != null;
 
         public static bool IsGamemodeRegistered(this Gamemode gamemode)
             => IsGamemodeRegistered(gamemode?.Barcode);
 
         public static Gamemode GetGamemode(string barcode)
-            => _Gamemodes.FirstOrDefault(x => x.Barcode == barcode);
+            => _Gamemodes[barcode];
 
         public static int GetGamemodeCount()
             => _Gamemodes.Count;
 
-        public static string[] GetGamemodeBarcodes()
-        {
-            List<string> barcodes = [];
-            _Gamemodes.ForEach(x => barcodes.Add(x.Barcode));
-            return [.. barcodes];
-        }
+        public static string[] GetGamemodeBarcodes() => _Gamemodes.Keys.ToArray();
 
         public static string GetToolTipValue(string barcode)
         {
-            var registered = _Gamemodes.FirstOrDefault(x => x.Barcode == barcode);
+            var registered = _Gamemodes[barcode];
             if (registered == null || registered.CustomToolTip == null)
                 return string.Empty;
 
@@ -109,7 +73,7 @@ namespace LabPresence
 
         public static Timestamp GetOverrideTime(string barcode)
         {
-            var registered = _Gamemodes.FirstOrDefault(x => x.Barcode == barcode);
+            var registered = _Gamemodes[barcode];
             if (registered == null || registered.OverrideTime == null)
                 return null;
 
@@ -132,14 +96,20 @@ namespace LabPresence
             => GetOverrideTime(gamemode?.Barcode);
     }
 
-    public class Gamemode(string barcode, float minimumDelay = 0, Func<string> customToolTip = null, Func<Timestamp> overrideTime = null)
+    public struct GamemodeParams {
+        public string barcode;
+        public float minimumDelay;
+        public Func<string> customToolTip;
+        public Func<Timestamp> overrideTime;
+    }
+    public class Gamemode(GamemodeParams gamemodeParams)
     {
-        public string Barcode { get; } = barcode;
+        public string Barcode { get; } = gamemodeParams.barcode;
 
-        public float MinimumDelay { get; } = minimumDelay;
+        public float MinimumDelay { get; } = gamemodeParams.minimumDelay;
 
-        public Func<string> CustomToolTip { get; } = customToolTip;
+        public Func<string> CustomToolTip { get; } = gamemodeParams.customToolTip;
 
-        public Func<Timestamp> OverrideTime { get; } = overrideTime;
+        public Func<Timestamp> OverrideTime { get; } = gamemodeParams.overrideTime;
     }
 }
